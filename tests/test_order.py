@@ -49,8 +49,9 @@ class TestOrderCreate:
     @allure.title('Проверка успешного создания заказа')
     @allure.description('При создании заказа передаются все обязательные и необязательные поля')
     @pytest.mark.parametrize("order_data", data)
+    # тут два теста с отправкой одного цвета будут падать, так как, видимо, в API баг
     def test_order_create_required_fields_success_create(self, order_data):
-        response = requests.post('http://qa-scooter.praktikum-services.ru/api/v1/orders/', data=str(order_data))
+        response = requests.post('http://qa-scooter.praktikum-services.ru/api/v1/orders/', data=order_data)
         assert response.status_code == 201 and 'track' in response.json()
 
 
