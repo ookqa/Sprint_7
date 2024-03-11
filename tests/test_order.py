@@ -3,6 +3,8 @@ import allure
 import pytest
 from faker import Faker
 
+from urls import Urls
+
 fake = Faker()
 
 
@@ -47,11 +49,11 @@ class TestOrderCreate:
     ]
 
     @allure.title('Проверка успешного создания заказа')
-    @allure.description('При создании заказа передаются все обязательные и необязательные поля')
+    @allure.description('При создании заказа передаются все обязательные и необязательные поля. Среди необязательных полей передаются данные о цвете скутера для заказа, ввключая один из двух возможных цветов, либо оба.')
     @pytest.mark.parametrize("order_data", data)
     # тут два теста с отправкой одного цвета будут падать, так как, видимо, в API баг
     def test_order_create_required_fields_success_create(self, order_data):
-        response = requests.post('http://qa-scooter.praktikum-services.ru/api/v1/orders/', data=order_data)
+        response = requests.post(Urls.ORDER_MAIN_URL, data=order_data)
         assert response.status_code == 201 and 'track' in response.json()
 
 
@@ -59,7 +61,7 @@ class TestGetOrdersList:
     @allure.title('Проверка успешного получения списка заказов')
     @allure.description('При получении списка заказа не передаются параметры')
     def test_get_order_list(self):
-        response = requests.get('https://qa-scooter.praktikum-services.ru/api/v1/orders/')
+        response = requests.get(Urls.ORDER_MAIN_URL)
         assert type(response.json()['orders']) == list and 'id' in response.json()['orders'][0]
 
 
@@ -68,18 +70,18 @@ class TestGetOrder:
     @allure.description('При получении заказа передаются несуществующий номер')
     def test_get_order_nonexistent_track_error_message(self):
         payload = {'t': '255499999'}
-        response = requests.get('https://qa-scooter.praktikum-services.ru/api/v1/orders/track', params=payload)
+        response = requests.get(Urls.ORDER_TRACK_URL, params=payload)
         assert response.status_code == 404 and response.json()['message'] == 'Заказ не найден'
 
     @allure.title('Проверка получения заказа без номера')
     @allure.description('При получении заказа не передается номер')
     def test_get_order_no_track_error_message(self):
-        response = requests.get('https://qa-scooter.praktikum-services.ru/api/v1/orders/track')
+        response = requests.get(Urls.ORDER_TRACK_URL)
         assert response.status_code == 400 and response.json()['message'] == 'Недостаточно данных для поиска'
 
     @allure.title('Проверка получения существующего заказа')
     @allure.description('При получении заказа передаются номер существующего заказа')
     def test_get_order_existent_track_success_message(self, created_order):
         payload = {'t': created_order}
-        response = requests.get('https://qa-scooter.praktikum-services.ru/api/v1/orders/track', params=payload)
+        response = requests.get(Urls.ORDER_TRACK_URL, params=payload)
         assert response.status_code == 200 and 'id' in response.json()['order']
